@@ -1,6 +1,7 @@
 import httplib2
 import os
 import sys
+import re
 
 from apiclient.discovery import build
 from apiclient.errors import HttpError
@@ -66,9 +67,10 @@ while True:
     if init_flag:
         kwargs['part'] = 'id, snippet'
         kwargs['channelId'] = channel_id
-        kwargs['maxResults'] = 50
+        kwargs['maxResults'] = 1
         kwargs['order'] = 'date'
         kwargs['type'] = 'video'
+        #kwargs['publishedBefore'] = "2015-06-17T07:07:37Z"
         init_flag = False
     else:
         kwargs['pageToken'] = nextPageToken
@@ -82,6 +84,10 @@ while True:
         #anaylze the videos
         count += 1
         video_title = item['snippet']['title']
+        #file_name check
+        video_title = re.sub(r'[\\|/|"|<|>|\|]', '***', video_title)
+        video_title = re.sub(r'[?]', '？', video_title)
+        video_title = re.sub(r'[:]', '：', video_title)
         video_id = item['id']['videoId']
         video_kwargs = {
             'part' : 'snippet',
@@ -103,9 +109,13 @@ while True:
 
         print('[No.%d] %s' % (count, video_title))
         print('Date : %s' % parsed_date)
-        data.download(channel_name)
+        try:
+            data.download(channel_name)
+        except OSError:
+            if(os.path.exists(file_name+'.mp4')):
+                print('the file already exists. skip downloading.')
         print('Download completed : %s' % file_name+'.mp4')
-        print
+        print()
 
     print()
 
