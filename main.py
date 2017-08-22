@@ -62,23 +62,30 @@ print('Channel Name : %s \nVideo Count : %s' % (channel_name, video_count))
 
 #retrieve videos of channel which you can save.
 init_flag = True; kwargs = {}; count = 0
+finish_flag = False
 #TODO cannot get more than 500 videos at once.
 while True:
     if init_flag:
         kwargs['part'] = 'id, snippet'
         kwargs['channelId'] = channel_id
-        kwargs['maxResults'] = 1
+        kwargs['maxResults'] = 50
         kwargs['order'] = 'date'
         kwargs['type'] = 'video'
         #kwargs['publishedBefore'] = "2015-06-17T07:07:37Z"
         init_flag = False
     else:
         kwargs['pageToken'] = nextPageToken
+
     results = service.search().list(**kwargs).execute()
-    nextPageToken = results['nextPageToken']
+    try:
+        nextPageToken = results['nextPageToken']
+    except KeyError:
+        finish_flag = True
+
     items = results['items']
 
     print('\n[DOWN LOAD]\n')
+
 
     for item in items:
         #anaylze the videos
@@ -118,5 +125,7 @@ while True:
         print()
 
     print()
+    if finish_flag:
+        break
 
-#
+print("Finish!")
