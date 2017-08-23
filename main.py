@@ -14,6 +14,8 @@ from pytube import YouTube
 import dateutil.parser
 from datetime import datetime
 
+import urllib
+
 """
 Authenticated phase
 """
@@ -45,9 +47,11 @@ service = get_authenticated_service(args)
 #CUI title
 print('-'*50); print(); print(' '*15+'Y Channel Saver'); print(); print('-'*50)
 
-#input channel id
-#TODO enable to input the URL, analyzing semantics of the URL
-channel_id = input('Channel ID ? > ')
+#input channel URL
+channel_url = input('[Channel URL]')
+paths = urllib.parse.urlparse(channel_url).path.split("/")
+if len(paths) == 3: #https://www.youtube.com/channel/(ID)
+    channel_id = paths[2]
 
 #get the channel information
 kwargs = {
