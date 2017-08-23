@@ -50,8 +50,12 @@ print('-'*50); print(); print(' '*15+'Y Channel Saver'); print(); print('-'*50)
 #input channel URL
 channel_url = input('[Channel URL]')
 paths = urllib.parse.urlparse(channel_url).path.split("/")
-if len(paths) == 3: #https://www.youtube.com/channel/(ID)
+if len(paths) == 3 and paths[1] == "channel": #https://www.youtube.com/channel/(ID)
     channel_id = paths[2]
+else:
+    print("invalid URL. you can get valid URL to click channel icon.")
+    exit()
+
 
 #get the channel information
 kwargs = {
