@@ -1,3 +1,5 @@
+from Channel import Channel
+
 import httplib2
 import os
 import sys
@@ -15,10 +17,6 @@ import dateutil.parser
 from datetime import datetime
 
 import urllib
-
-"""
-Authenticated phase
-"""
 
 CLIENT_SECRETS_FILE = "client_secret.json"
 
@@ -41,99 +39,97 @@ def get_authenticated_service(args):
   return build(API_SERVICE_NAME, API_VERSION,
       http=credentials.authorize(httplib2.Http()))
 
-args = argparser.parse_args()
-service = get_authenticated_service(args)
+def main():
 
-#CUI title
-print('-'*50); print(); print(' '*15+'Y Channel Saver'); print(); print('-'*50)
+    #Authenticated phase
+    args = argparser.parse_args()
+    service = get_authenticated_service(args)
 
-#input channel URL
-channel_url = input('[Channel URL]')
-paths = urllib.parse.urlparse(channel_url).path.split("/")
-if len(paths) == 3 and paths[1] == "channel": #https://www.youtube.com/channel/(ID)
-    channel_id = paths[2]
-else:
-    print("invalid URL. you can get valid URL to click channel icon.")
-    exit()
+    #CUI title
+    print('-'*50); print(); print(' '*15+'Y Channel Saver'); print(); print('-'*50)
 
-
-#get the channel information
-kwargs = {
-    'part': 'snippet,statistics',
-    'id' : channel_id
-}
-#TODO add exception processing
-results = service.channels().list(**kwargs).execute()
-channel_name = results['items'][0]['snippet']['title']
-video_count = results['items'][0]['statistics']['videoCount']
-print('Channel Name : %s \nVideo Count : %s' % (channel_name, video_count))
-
-#retrieve videos of channel which you can save.
-init_flag = True; kwargs = {}; count = 0
-finish_flag = False
-#TODO cannot get more than 500 videos at once.
-while True:
-    if init_flag:
-        kwargs['part'] = 'id, snippet'
-        kwargs['channelId'] = channel_id
-        kwargs['maxResults'] = 50
-        kwargs['order'] = 'date'
-        kwargs['type'] = 'video'
-        #kwargs['publishedBefore'] = "2015-06-17T07:07:37Z"
-        init_flag = False
+    #input channel URL
+    channel_url = input('[Channel URL]')
+    paths = urllib.parse.urlparse(channel_url).path.split("/")
+    if len(paths) == 3 and paths[1] == "channel": #https://www.youtube.com/channel/(ID)
+        channel_id = paths[2]
     else:
-        kwargs['pageToken'] = nextPageToken
+        print("invalid URL. you can get valid URL to click channel icon.")
+        return
 
-    results = service.search().list(**kwargs).execute()
-    try:
-        nextPageToken = results['nextPageToken']
-    except KeyError:
-        finish_flag = True
+    channel = Channel(service, channel_id)
+    if not channel.get_info():
+        return -1
 
-    items = results['items']
+    #retrieve videos of channel which you can save.
+    init_flag = True; kwargs = {}; count = 0
+    finish_flag = False
+    #TODO cannot get more than 500 videos at once.
+    while True:
+        if init_flag:
+            kwargs['part'] = 'id, snippet'
+            kwargs['channelId'] = channel.id
+            kwargs['maxResults'] = 50
+            kwargs['order'] = 'date'
+            kwargs['type'] = 'video'
+            #kwargs['publishedBefore'] = "2015-06-17T07:07:37Z"
+            init_flag = False
+        else:
+            kwargs['pageToken'] = nextPageToken
 
-    print('\n[DOWN LOAD]\n')
-
-
-    for item in items:
-        #anaylze the videos
-        count += 1
-        video_title = item['snippet']['title']
-        #file_name check
-        video_title = re.sub(r'[\\|/|"|<|>|\|]', '***', video_title)
-        video_title = re.sub(r'[?]', '？', video_title)
-        video_title = re.sub(r'[:]', '：', video_title)
-        video_id = item['id']['videoId']
-        video_kwargs = {
-            'part' : 'snippet',
-            'id' : video_id
-        }
-        video_results = service.videos().list(**video_kwargs).execute()
-        date = video_results['items'][0]['snippet']['publishedAt']
-        parsed_date = dateutil.parser.parse(date)
-        date = parsed_date.strftime('%Y%m%d%H%M%S')
-        file_name = date + ' ' + video_title
-
-        #prepare for download videos
-        url = "https://www.youtube.com/watch?v=" + video_id
-        yt = YouTube(url)
-        yt.set_filename(file_name)
-        data = yt.filter('mp4')[-1]
-        if not os.path.exists(channel_name):
-            os.mkdir(channel_name)
-
-        print('[No.%d] %s' % (count, video_title))
-        print('Date : %s' % parsed_date)
+        results = service.search().list(**kwargs).execute()
         try:
-            data.download(channel_name)
-        except OSError:
-            if(os.path.exists(file_name+'.mp4')):
-                print('the file already exists. skip downloading.')
-        print('Download completed : %s' % file_name+'.mp4')
+            nextPageToken = results['nextPageToken']
+        except KeyError:
+            finish_flag = True
+
+        items = results['items']
+
+        print('\n[DOWN LOAD]\n')
+
+
+        for item in items:
+            #anaylze the videos
+            count += 1
+            video_title = item['snippet']['title']
+            #file_name check
+            video_title = re.sub(r'[\\|/|"|<|>|\|]', '***', video_title)
+            video_title = re.sub(r'[?]', '？', video_title)
+            video_title = re.sub(r'[:]', '：', video_title)
+            video_id = item['id']['videoId']
+            video_kwargs = {
+                'part' : 'snippet',
+                'id' : video_id
+            }
+            video_results = service.videos().list(**video_kwargs).execute()
+            date = video_results['items'][0]['snippet']['publishedAt']
+            parsed_date = dateutil.parser.parse(date)
+            date = parsed_date.strftime('%Y%m%d%H%M%S')
+            file_name = date + ' ' + video_title
+
+            #prepare for download videos
+            url = "https://www.youtube.com/watch?v=" + video_id
+            yt = YouTube(url)
+            yt.set_filename(file_name)
+            data = yt.filter('mp4')[-1]
+            if not os.path.exists(channel.name):
+                os.mkdir(channel.name)
+
+            print('[No.%d] %s' % (count, video_title))
+            print('Date : %s' % parsed_date)
+            try:
+                data.download(channel.name)
+            except OSError:
+                if(os.path.exists(file_name+'.mp4')):
+                    print('the file already exists. skip downloading.')
+            print('Download completed : %s' % file_name+'.mp4')
+            print()
+
         print()
+        if finish_flag:
+            break
 
-    print()
-    if finish_flag:
-        break
+    print("Finish!")
 
-print("Finish!")
+if __name__ == "__main__":
+    main()
