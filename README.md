@@ -18,8 +18,8 @@
 
     [No.2] WHAT'S HOT 2017： COMING JAPAN TRENDS BU JAPANESE GIRLS AND BOYS
     Date : 2017-08-23 08:00:03+00:00
-    
+
 
 ## Requirement
-pytube
-googleapiclient
+* pytube 6.4.2
+* googleapiclient 1.6.2

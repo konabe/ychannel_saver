@@ -12,19 +12,21 @@ from pytube import YouTube
 import dateutil.parser
 from datetime import datetime
 
+data_dir_name = os.path.join(os.path.dirname(__file__), 'data')
+
 def main():
 
-    #Authenticated phase
-    args = argparser.parse_args()
-    service = get_authenticated_service(args)
+    init()
+    service = get_authenticated_service()
 
     #CUI title
     print('-'*50); print(); print(' '*15+'Y Channel Saver'); print(); print('-'*50)
 
     #input channel URL
     channel_url = input('[Channel URL]')
+    #TODO 動画URLからチャンネルを自動的に取得
     paths = urllib.parse.urlparse(channel_url).path.split("/")
-    if len(paths) == 3 and paths[1] == "channel": #https://www.youtube.com/channel/(ID)
+    if len(paths) == 3 and paths[1] == "channel":  # https://www.youtube.com/channel/(ID)
         channel_id = paths[2]
     else:
         print("invalid URL. you can get valid URL to click channel icon.")
@@ -33,6 +35,7 @@ def main():
     channel = Channel(service, channel_id)
     if not channel.get_info():
         return -1
+    channel_dir_name = os.path.join(data_dir_name, channel.name)
 
     #retrieve videos of channel which you can save.
     init_flag = True; kwargs = {}; count = 0
@@ -60,7 +63,6 @@ def main():
 
         print('\n[DOWN LOAD]\n')
 
-
         for item in items:
             #anaylze the videos
             count += 1
@@ -86,17 +88,17 @@ def main():
             yt.set_filename(file_name)
             data = yt.filter('mp4')[-1]
 
-            # TODO : dataディレクトリに入れられるようにする
-            if not os.path.exists(channel.name):
-                os.mkdir(channel.name)
+            if not os.path.exists(channel_dir_name):
+                os.mkdir(channel_dir_name)
 
             print('[No.%d] %s' % (count, video_title))
             print('Date : %s' % parsed_date)
             try:
-                data.download(channel.name)
-            except OSError:
-                if(os.path.exists(file_name+'.mp4')):
-                    print('the file already exists. skip downloading.')
+                data.download(channel_dir_name)
+            except (FileExistsError, OSError):
+                print('the file already exists. skipped downloading. \n')
+                continue
+
             print('Download completed : %s' % file_name+'.mp4')
             print()
 
@@ -105,6 +107,10 @@ def main():
             break
 
     print("Finish!")
+
+def init():
+    if not os.path.exists(data_dir_name):
+        os.mkdir(data_dir_name)
 
 if __name__ == "__main__":
     main()
