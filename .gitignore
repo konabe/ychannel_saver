@@ -1,3 +1,4 @@
 ﻿client_secret.json
 main.py-oauth2.json
 data/*
+__pycache__/*
