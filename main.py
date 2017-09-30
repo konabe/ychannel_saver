@@ -1,20 +1,16 @@
-from channel import Channel
+from pytube import YouTube
 from auth import get_authenticated_service
-
-import os
-import re
-import urllib
-from copy import deepcopy
-
 from oauth2client.tools import argparser
 
-from pytube import YouTube
+from channel import Channel
 
+import os, urllib
+import re
+from copy import deepcopy
 import dateutil.parser
 from datetime import datetime, timedelta
 
 data_dir_name = os.path.join(os.path.dirname(__file__), 'data')
-
 NO_DOWNLOAD = True
 
 def main():
@@ -43,8 +39,8 @@ def main():
     #retrieve videos of channel which you can save.
     init_flag = True; kwargs = {}; count = 0
     finish_flag = False
-    #TODO チャンネル立ち上げ日の取得から取得開始日時を取得
-    start_published = datetime(2005,2,1) # the date youtube started
+    start_published = datetime(channel.publishedAt_year,
+            channel.publishedAt_month, 1)
     tmp_published = None
     end_publised = datetime.now()
 
