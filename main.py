@@ -1,17 +1,15 @@
-from pytube import YouTube
 from auth import get_authenticated_service
 from oauth2client.tools import argparser
 
 from channel import Channel
+from video import Video
 
 import os, urllib
-import re
 from copy import deepcopy
 import dateutil.parser
 from datetime import datetime, timedelta
 
 data_dir_name = os.path.join(os.path.dirname(__file__), 'data')
-NO_DOWNLOAD = True
 
 def main():
 
@@ -86,42 +84,9 @@ def main():
             for item in items[::-1]:
                 #anaylze the videos
                 count += 1
-                video_title = item['snippet']['title']
-                #file_name check
-                video_title = re.sub(r'[\\|/|"|<|>|\|]', '***', video_title)
-                video_title = re.sub(r'[?]', '？', video_title)
-                video_title = re.sub(r'[:]', '：', video_title)
-                video_id = item['id']['videoId']
-                video_kwargs = {
-                    'part' : 'snippet',
-                    'id' : video_id
-                }
-                video_results = service.videos().list(**video_kwargs).execute()
-                date = video_results['items'][0]['snippet']['publishedAt']
-                parsed_date = dateutil.parser.parse(date)
-                date = parsed_date.strftime('%Y%m%d%H%M%S')
-                file_name = date + ' ' + video_title
-
-                #prepare for download videos
-                url = "https://www.youtube.com/watch?v=" + video_id
-                yt = YouTube(url)
-                yt.set_filename(file_name)
-                data = yt.filter('mp4')[-1]
-
-
-                if not os.path.exists(channel_dir_name):
-                    os.mkdir(channel_dir_name)
-
-                print('[No.%d] %s' % (count, video_title))
-                print('Date : %s' % parsed_date)
-                if(not NO_DOWNLOAD):
-                    try:
-                        data.download(channel_dir_name)
-                    except (FileExistsError, OSError):
-                        print('the file already exists. skipped downloading. \n')
-                        continue
-                    print('Download completed : %s' % file_name+'.mp4')
-                print()
+                v = Video(service, item)
+                v.get_info()
+                v.save(count, channel_dir_name)
 
             print()
             if finish_flag:
