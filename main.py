@@ -9,7 +9,7 @@ from copy import deepcopy
 import dateutil.parser
 from datetime import datetime, timedelta
 
-data_dir_name = os.path.join(os.path.dirname(__file__), 'data')
+DATA_DIR_NAME = os.path.join(os.path.dirname(__file__), 'data')
 
 def main():
 
@@ -27,12 +27,12 @@ def main():
         channel_id = paths[2]
     else:
         print("invalid URL. you can get valid URL to click channel icon.")
-        return
+        return -1
 
     channel = Channel(service, channel_id)
     if not channel.get_info():
         return -1
-    channel_dir_name = os.path.join(data_dir_name, channel.name)
+    channel_dir_name = os.path.join(DATA_DIR_NAME, channel.name)
 
     #retrieve videos of channel which you can save.
     init_flag = True; kwargs = {}; count = 0
