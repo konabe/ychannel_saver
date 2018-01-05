@@ -100,8 +100,8 @@ def main():
     print("Finish!")
 
 def init():
-    if not os.path.exists(data_dir_name):
-        os.mkdir(data_dir_name)
+    if not os.path.exists(DATA_DIR_NAME):
+        os.mkdir(DATA_DIR_NAME)
 
 if __name__ == "__main__":
     main()

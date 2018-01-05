@@ -1,6 +1,7 @@
 import dateutil.parser
 import re, os
 from pytube import YouTube
+from pytube.exceptions import AgeRestricted
 
 NO_DOWNLOAD = False
 
@@ -39,22 +40,25 @@ class Video:
 
         #prepare for download videos
         url = "https://www.youtube.com/watch?v=" + self.id
-        yt = YouTube(url)
-        yt.set_filename(self.file_name)
-        data = yt.filter('mp4')[-1]
+        try:
+            yt = YouTube(url)
+            yt.set_filename(self.file_name)
+            data = yt.filter('mp4')[-1]
 
-        if not os.path.exists(channel_dir_name):
-            os.mkdir(channel_dir_name)
+            if not os.path.exists(channel_dir_name):
+                os.mkdir(channel_dir_name)
 
-        print('[No.%d] %s' % (count, self.title))
-        print('Date : %s' % self.parsed_date)
-        if(not NO_DOWNLOAD):
-            try:
-                data.download(channel_dir_name)
-            except (FileExistsError, OSError):
-                print('the file already exists. skipped downloading. \n')
-                return
-            print('Download completed : %s' % self.file_name+'.mp4')
-        print()
+            print('[No.%d] %s' % (count, self.title))
+            print('Date : %s' % self.parsed_date)
+            if(not NO_DOWNLOAD):
+                try:
+                    data.download(channel_dir_name)
+                except (FileExistsError, OSError):
+                    print('the file already exists. skipped downloading. \n')
+                    return
+                print('Download completed : %s' % self.file_name+'.mp4')
+            print()
+        except (AgeRestricted):
+            print('!!!Age Restricted!!!')
 
     print()
